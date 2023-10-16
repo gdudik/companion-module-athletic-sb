@@ -71,6 +71,7 @@ class ModuleInstance extends InstanceBase {
 
 		switch (action.actionId) {
 			case 'start_board':
+				var boardPosition = ''
 				var reqMethod = 'POST';
 				var boardName = action.options.board_name;
 				var boardPosition = action.options.board_position
@@ -93,9 +94,9 @@ class ModuleInstance extends InstanceBase {
 				var boardName = action.options.board_name;
 				break;
 
-				case 'get_data':
-				var reqMethod = 'GET';	
-				var boardAction = 'get-options';
+				case 'set_data':
+				var reqMethod = 'POST';	
+				var boardAction = 'set-data?id=' + encodeURIComponent(action.options.event_id);
 				var boardName = action.options.board_name;
 				break;
 				
@@ -116,18 +117,17 @@ class ModuleInstance extends InstanceBase {
 		}
 		
 
-		var buffer = ''
-
+		var buffer = '';
+		var requestCompleted = false;
 		// Make the HTTP request
 		var req = http.request(requestData, function (res) {
 			this.log('info',res.statusCode)
 			var buffer = ''
 			res.on('data', function (data) {
-				buffer = buffer + data
-			})
+				buffer += data
+			});
 			res.on('end', function (data) {
-				console.log(buffer)
-			})
+			});
 		})
 
 		req.on('error', function (e) {

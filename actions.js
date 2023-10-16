@@ -34,13 +34,18 @@ module.exports = function (self) {
 				self.executeAction(event)
 			},
 		},
-		get_data: {
-			name: 'Stop Board',
+		set_data: {
+			name: 'Set Data',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Board Name',
 					id: 'board_name',
+				},
+				{
+					type: 'textinput',
+					label: 'Event ID',
+					id: 'event_id',
 				},
 				
 			],

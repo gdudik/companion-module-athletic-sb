@@ -118,7 +118,6 @@ class ModuleInstance extends InstanceBase {
 		
 
 		var buffer = '';
-		var requestCompleted = false;
 		// Make the HTTP request
 		var req = http.request(requestData, function (res) {
 			this.log('info',res.statusCode)

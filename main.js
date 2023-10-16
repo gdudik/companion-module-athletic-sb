@@ -3,10 +3,9 @@ const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
 const UpdateVariableDefinitions = require('./variables')
-const http = require('http')
 const path = require('path')
 const axios = require('axios');
-
+const fs = require('fs');
 
 class ModuleInstance extends InstanceBase {
 	constructor(internal) {
@@ -69,34 +68,38 @@ class ModuleInstance extends InstanceBase {
 	executeAction = (action) => {
 		const self = this;
 		const url = 'http://' + self.config.host + ':' + self.config.port;
-	
+
 		let reqMethod, boardAction, boardName;
-	
+
 		switch (action.actionId) {
 			case 'start_board':
 				const boardPosition = action.options.board_position;
 				const boardPositionArray = boardPosition.split(",");
 				const boardPosX = boardPositionArray[0];
 				const boardPosY = boardPositionArray[1];
-	
-				boardAction = boardPosition !== '' ? `start?x=${boardPosX}&y=${boardPosY}` : 'start';
+
+				if (boardPosition !== '') {
+					boardAction = `start?x=${boardPosX}&y=${boardPosY}`;
+				} else {
+					boardAction = 'start';
+				}
 				reqMethod = 'POST';
 				boardName = action.options.board_name;
 				break;
-	
+
 			case 'stop_board':
 				reqMethod = 'POST';
 				boardAction = 'stop';
 				boardName = action.options.board_name;
 				break;
-	
+
 			case 'set_data':
 				reqMethod = 'POST';
 				boardAction = `set-data?id=${encodeURIComponent(action.options.event_id)}`;
 				boardName = action.options.board_name;
 				break;
 		}
-	
+
 		// Compile the Axios request to be made
 		const requestData = {
 			method: reqMethod,
@@ -105,10 +108,11 @@ class ModuleInstance extends InstanceBase {
 				'Content-Type': 'application/json',
 			},
 		};
-	
+
 		axios(requestData)
 			.then((response) => {
-				console.log('Status Code:', response.status);
+				
+				this.log('info', response.status);
 				// You can handle the response data here if needed
 			})
 			.catch((error) => {

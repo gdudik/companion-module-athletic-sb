@@ -74,11 +74,11 @@ class ModuleInstance extends InstanceBase {
 		switch (action.actionId) {
 			case 'start_board':
 				const boardPosition = action.options.board_position;
-				const boardPositionArray = boardPosition.split(",");
-				const boardPosX = boardPositionArray[0];
-				const boardPosY = boardPositionArray[1];
-
-				if (boardPosition !== '') {
+				if (boardPosition) {
+					
+					const boardPositionArray = boardPosition.split(",");
+					const boardPosX = boardPositionArray[0];
+					const boardPosY = boardPositionArray[1];
 					boardAction = `start?x=${boardPosX}&y=${boardPosY}`;
 				} else {
 					boardAction = 'start';
@@ -111,7 +111,7 @@ class ModuleInstance extends InstanceBase {
 
 		axios(requestData)
 			.then((response) => {
-				
+
 				this.log('info', response.status);
 				// You can handle the response data here if needed
 			})

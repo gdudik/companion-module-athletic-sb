@@ -10,7 +10,8 @@
 		"type": "git"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.4.0"
+		"@companion-module/base": "~1.4.0",
+		"axios": "^1.5.1"
 	},
 	"devDependencies": {
 		"@companion-module/tools": "^1.2.0"

@@ -49,10 +49,24 @@ module.exports = function (self) {
 				},
 				
 			],
+			
 			callback: async (event) => {
 				self.executeAction(event)
 			},
 		},
-		
+		get_data: {
+			name: 'Log Board Options',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Board Name',
+					id: 'board_name',
+				},
+				
+			],
+			callback: async (event) => {
+				self.executeAction(event)
+			},
+		},
 	})
 } 

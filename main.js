@@ -75,7 +75,7 @@ class ModuleInstance extends InstanceBase {
 			case 'start_board':
 				const boardPosition = action.options.board_position;
 				if (boardPosition) {
-					
+
 					const boardPositionArray = boardPosition.split(",");
 					const boardPosX = boardPositionArray[0];
 					const boardPosY = boardPositionArray[1];
@@ -98,6 +98,12 @@ class ModuleInstance extends InstanceBase {
 				boardAction = `set-data?id=${encodeURIComponent(action.options.event_id)}`;
 				boardName = action.options.board_name;
 				break;
+
+			case 'get_data':
+				reqMethod = 'GET';
+				boardAction = 'get-options';
+				boardName = action.options.board_name;
+				break;
 		}
 
 		// Compile the Axios request to be made
@@ -113,6 +119,7 @@ class ModuleInstance extends InstanceBase {
 			.then((response) => {
 
 				this.log('info', response.status);
+				console.log(response.data)
 				// You can handle the response data here if needed
 			})
 			.catch((error) => {

@@ -6,126 +6,135 @@ const UpdateVariableDefinitions = require('./variables')
 const path = require('path')
 const axios = require('axios');
 const fs = require('fs');
+const variables = require('./variables')
 
 class ModuleInstance extends InstanceBase {
-	constructor(internal) {
-		super(internal)
-	}
+  constructor(internal) {
+    super(internal)
+  }
 
-	async init(config) {
-		this.config = config
+  async init(config) {
+    this.config = config
+    this.updateStatus(InstanceStatus.Ok)
 
-		this.updateStatus(InstanceStatus.Ok)
+    this.updateActions() // export actions
+    this.updateFeedbacks() // export feedbacks
+    this.updateVariableDefinitions() // export variable definitions
+  }
+  // When module gets deleted
+  async destroy() {
+    this.log('debug', 'destroy')
+  }
 
-		this.updateActions() // export actions
-		this.updateFeedbacks() // export feedbacks
-		this.updateVariableDefinitions() // export variable definitions
-	}
-	// When module gets deleted
-	async destroy() {
-		this.log('debug', 'destroy')
-	}
+  async configUpdated(config) {
+    this.config = config
+  }
 
-	async configUpdated(config) {
-		this.config = config
-	}
+  // Return config fields for web config
+  getConfigFields() {
+    return [
+      {
+        type: 'textinput',
+        id: 'host',
+        label: 'ASB IP Address',
+        tooltip: 'The IP of the ASB Computer',
+        width: 6,
+        regex: Regex.IP,
+      },
+      {
+        type: 'textinput',
+        id: 'port',
+        label: 'ASB Port Number (default 5833)',
+        tooltip: 'The Port Number that ASB is listening on.',
+        width: 6,
+        default: '5833',
+        regex: Regex.PORT,
+      },
+    ]
+  }
 
-	// Return config fields for web config
-	getConfigFields() {
-		return [
-			{
-				type: 'textinput',
-				id: 'host',
-				label: 'ASB IP Address',
-				tooltip: 'The IP of the ASB Computer',
-				width: 6,
-				regex: Regex.IP,
-			},
-			{
-				type: 'textinput',
-				id: 'port',
-				label: 'ASB Port Number (default 5833)',
-				tooltip: 'The Port Number that ASB is listening on.',
-				width: 6,
-				default: '5833',
-				regex: Regex.PORT,
-			},
-		]
-	}
+  updateActions() {
+    UpdateActions(this)
+  }
 
-	updateActions() {
-		UpdateActions(this)
-	}
+  updateFeedbacks() {
+    UpdateFeedbacks(this)
+  }
 
-	updateFeedbacks() {
-		UpdateFeedbacks(this)
-	}
+  updateVariableDefinitions() {
+    UpdateVariableDefinitions(this)
+  }
 
-	updateVariableDefinitions() {
-		UpdateVariableDefinitions(this)
-	}
+  executeAction = (action) => {
+    const self = this;
+    const url = 'http://' + self.config.host + ':' + self.config.port;
 
-	executeAction = (action) => {
-		const self = this;
-		const url = 'http://' + self.config.host + ':' + self.config.port;
+    let reqMethod, boardAction, boardName;
 
-		let reqMethod, boardAction, boardName;
+    switch (action.actionId) {
+      case 'start_board':
+        const boardPosition = action.options.board_position;
+        if (boardPosition) {
 
-		switch (action.actionId) {
-			case 'start_board':
-				const boardPosition = action.options.board_position;
-				if (boardPosition) {
+          const boardPositionArray = boardPosition.split(",");
+          const boardPosX = boardPositionArray[0];
+          const boardPosY = boardPositionArray[1];
+          boardAction = `start?x=${boardPosX}&y=${boardPosY}`;
+        } else {
+          boardAction = 'start';
+        }
+        reqMethod = 'POST';
+        boardName = action.options.board_name;
+        break;
 
-					const boardPositionArray = boardPosition.split(",");
-					const boardPosX = boardPositionArray[0];
-					const boardPosY = boardPositionArray[1];
-					boardAction = `start?x=${boardPosX}&y=${boardPosY}`;
-				} else {
-					boardAction = 'start';
-				}
-				reqMethod = 'POST';
-				boardName = action.options.board_name;
-				break;
+      case 'stop_board':
+        reqMethod = 'POST';
+        boardAction = 'stop';
+        boardName = action.options.board_name;
+        break;
 
-			case 'stop_board':
-				reqMethod = 'POST';
-				boardAction = 'stop';
-				boardName = action.options.board_name;
-				break;
+      case 'set_data':
+        reqMethod = 'POST';
+        boardAction = `set-data?id=${encodeURIComponent(action.options.event_id)}`;
+        boardName = action.options.board_name;
+        break;
 
-			case 'set_data':
-				reqMethod = 'POST';
-				boardAction = `set-data?id=${encodeURIComponent(action.options.event_id)}`;
-				boardName = action.options.board_name;
-				break;
+      case 'get_data':
+        reqMethod = 'GET';
+        boardAction = 'get-options';
+        boardName = action.options.board_name;
+        break;
+    }
 
-			case 'get_data':
-				reqMethod = 'GET';
-				boardAction = 'get-options';
-				boardName = action.options.board_name;
-				break;
-		}
+    // Compile the Axios request to be made
+    const requestData = {
+      method: reqMethod,
+      url: `${url}/boards/${encodeURIComponent(boardName)}/${boardAction}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
 
-		// Compile the Axios request to be made
-		const requestData = {
-			method: reqMethod,
-			url: `${url}/boards/${encodeURIComponent(boardName)}/${boardAction}`,
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		};
+    axios(requestData)
+      .then((response) => {
 
-		axios(requestData)
-			.then((response) => {
-
-				this.log('info', response.status);
-				console.log(response.data)
-				// You can handle the response data here if needed
-			})
-			.catch((error) => {
-				console.error('Error:', error.message);
-			});
-	};
+        this.log('info', response.status);
+        console.log(boardAction)
+        const boardData = response.data;
+        if (boardAction === 'get-options') {
+          console.log(boardData.length)
+          for (let i = 0; i < boardData.length; i++) {
+            this.setVariableDefinitions({
+             variableId: `variable${i}`, name: boardData[i].name
+          })
+        }
+          this.setVariableValues({'variable1': boardData[0].id})
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error.message);
+      });
+  };
 }
 
 runEntrypoint(ModuleInstance, UpgradeScripts)

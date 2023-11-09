@@ -13,6 +13,7 @@ module.exports = function (self) {
           label: 'Board position (x,y), optional',
           id: 'board_position',
           regex: '^\d{1,5},\d{1,5}$',
+          useVariables: true
         },
         
       ],
@@ -27,6 +28,7 @@ module.exports = function (self) {
           type: 'textinput',
           label: 'Board Name',
           id: 'board_name',
+          useVariables: true
         },
         
       ],
@@ -41,11 +43,13 @@ module.exports = function (self) {
           type: 'textinput',
           label: 'Board Name',
           id: 'board_name',
+          useVariables: true
         },
         {
           type: 'textinput',
           label: 'Event ID',
           id: 'event_id',
+          useVariables: true
         },
         
       ],
@@ -61,6 +65,7 @@ module.exports = function (self) {
           type: 'textinput',
           label: 'Board Name',
           id: 'board_name',
+          useVariables: true
         },
         
       ],

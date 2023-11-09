@@ -3,10 +3,13 @@ const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
 const UpdateVariableDefinitions = require('./variables')
+const UpdatePresets = require('./presets.js')
 const path = require('path')
 const axios = require('axios');
 const fs = require('fs');
-const variables = require('./variables')
+const eventNames = [];
+const eventIds = [];
+let varValues = {};
 
 class ModuleInstance extends InstanceBase {
   constructor(internal) {
@@ -16,10 +19,11 @@ class ModuleInstance extends InstanceBase {
   async init(config) {
     this.config = config
     this.updateStatus(InstanceStatus.Ok)
-
+    this.updatePresets()
     this.updateActions() // export actions
     this.updateFeedbacks() // export feedbacks
     this.updateVariableDefinitions() // export variable definitions
+    console.log(await this.getBoardNames())
   }
   // When module gets deleted
   async destroy() {
@@ -65,7 +69,30 @@ class ModuleInstance extends InstanceBase {
     UpdateVariableDefinitions(this)
   }
 
-  executeAction = (action) => {
+  updatePresets() {
+    UpdatePresets(this)
+  }
+
+  async getBoardNames() {
+    let boardInfo;
+    const boardNames = [];
+    const url = 'http://' + this.config.host + ':' + this.config.port;
+    const boardInfoRequest = {
+      method: 'get',
+      url: `${url}/boards/`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+    const response = await axios(boardInfoRequest);
+    boardInfo = response.data;
+    for (let i = 0; i < boardInfo.length; i++) {
+      boardNames.push(boardInfo[i].name)
+    }
+    return boardNames;
+  }
+
+  executeAction = async (action) => {
     const self = this;
     const url = 'http://' + self.config.host + ':' + self.config.port;
 
@@ -95,7 +122,8 @@ class ModuleInstance extends InstanceBase {
 
       case 'set_data':
         reqMethod = 'POST';
-        boardAction = `set-data?id=${encodeURIComponent(action.options.event_id)}`;
+        let event_id = await this.parseVariablesInString(action.options.event_id);
+        boardAction = `set-data?id=${encodeURIComponent(event_id)}`;
         boardName = action.options.board_name;
         break;
 
@@ -113,23 +141,42 @@ class ModuleInstance extends InstanceBase {
       headers: {
         'Content-Type': 'application/json',
       },
-    };
+    }
 
     axios(requestData)
       .then((response) => {
 
-        this.log('info', response.status);
-        console.log(boardAction)
+        //this.log('info', response.status);
+        //console.log(boardAction)
         const boardData = response.data;
+        //console.log(boardData);
+
         if (boardAction === 'get-options') {
-          console.log(boardData.length)
-          for (let i = 0; i < boardData.length; i++) {
-            this.setVariableDefinitions({
-             variableId: `variable${i}`, name: boardData[i].name
-          })
-        }
-          this.setVariableValues({'variable1': boardData[0].id})
-        }
+          if (varValues) { /* clear the variables before redefining, otherwise variable values for definitions persist even though the variables were removed from the list of defined variables */
+            let keys = Object.keys(varValues);
+            for (let i = 0; i < keys.length; i++) {
+              varValues[keys[i]] = undefined;
+            }
+            this.setVariableValues(varValues);
+          }
+          const eventNames = [];
+          const eventIds = [];
+          varValues = {};
+
+          for (let i = 0; i < boardData.length; i++) { //create the arrays for variable definitions
+            eventNames[i] = { variableId: `event${i}Name`, name: `${boardData[i].name}--Label` };
+            eventIds[i] = { variableId: `event${i}ID`, name: `${boardData[i].name}--ID` }
+          }
+          let eventNamesandIds = eventNames.concat(eventIds)
+          this.setVariableDefinitions(eventNamesandIds);
+
+          for (let i = 0; i < boardData.length; i++) { //create the arrays for variable values
+            varValues[`event${i}Name`] = boardData[i].name
+            varValues[`event${i}ID`] = boardData[i].id
+          }
+          this.setVariableValues(varValues);
+        } //end if board-action equals get-options
+
       })
       .catch((error) => {
         console.error('Error:', error.message);
@@ -138,3 +185,5 @@ class ModuleInstance extends InstanceBase {
 }
 
 runEntrypoint(ModuleInstance, UpgradeScripts)
+
+

@@ -1,3 +1,4 @@
+const { combineRgb } = require('@companion-module/base')
 module.exports = function (self) {
   self.setPresetDefinitions(presets)
 }
@@ -10,14 +11,14 @@ presets[`my_first_preset`] = {
     // This is the minimal set of style properties you must define
     text: `Board On/Off`, // You can use variables from your module here
     size: 'auto',
-    color: '#FFFFFF',
-    //bgcolor: combineRgb(0, 0, 0),
+    color: combineRgb(255, 255, 255),
+    bgcolor: combineRgb(0, 0, 0),
   },
   steps: [{
     down: [{
-      actionId: 'my-action',
+      actionId: 'start_board',
       options: {
-        brightness: 100,
+       board_name: 'Board'
       },
     }],
     up: [],

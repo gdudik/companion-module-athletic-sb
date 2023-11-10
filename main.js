@@ -10,6 +10,9 @@ const fs = require('fs');
 const eventNames = [];
 const eventIds = [];
 let varValues = {};
+let boardInfo;
+const boardNames = [];
+let boardValues = {};
 
 class ModuleInstance extends InstanceBase {
   constructor(internal) {
@@ -23,7 +26,7 @@ class ModuleInstance extends InstanceBase {
     this.updateActions() // export actions
     this.updateFeedbacks() // export feedbacks
     this.updateVariableDefinitions() // export variable definitions
-    console.log(await this.getBoardNames())
+    this.assignBoardNamesToVars()
   }
   // When module gets deleted
   async destroy() {
@@ -73,9 +76,8 @@ class ModuleInstance extends InstanceBase {
     UpdatePresets(this)
   }
 
-  async getBoardNames() {
-    let boardInfo;
-    const boardNames = [];
+  async assignBoardNamesToVars() {
+
     const url = 'http://' + this.config.host + ':' + this.config.port;
     const boardInfoRequest = {
       method: 'get',
@@ -87,9 +89,13 @@ class ModuleInstance extends InstanceBase {
     const response = await axios(boardInfoRequest);
     boardInfo = response.data;
     for (let i = 0; i < boardInfo.length; i++) {
-      boardNames.push(boardInfo[i].name)
+      boardNames[i] = { variableId: `board${i}Name`, name: `board${i}Name` };
     }
-    return boardNames;
+    //this.setVariableDefinitions(boardNames);
+    for (let i = 0; i < boardInfo.length; i++) {
+      boardValues[`board${i}Name`] = boardInfo[i].name
+    }
+    //this.setVariableValues(boardValues);
   }
 
   executeAction = async (action) => {
@@ -154,6 +160,7 @@ class ModuleInstance extends InstanceBase {
         if (boardAction === 'get-options') {
           if (varValues) { /* clear the variables before redefining, otherwise variable values for definitions persist even though the variables were removed from the list of defined variables */
             let keys = Object.keys(varValues);
+            console.log(keys);
             for (let i = 0; i < keys.length; i++) {
               varValues[keys[i]] = undefined;
             }

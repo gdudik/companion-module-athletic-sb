@@ -13,7 +13,12 @@ let varValues = {};
 let boardInfo;
 const boardNames = [];
 let boardValues = {};
-module.exports = { boardNames };
+const { combineRgb } = require('@companion-module/base')
+
+function getBoardNames() {
+  return boardNames;
+}
+module.exports = { getBoardNames }
 
 
 class ModuleInstance extends InstanceBase {
@@ -23,15 +28,13 @@ class ModuleInstance extends InstanceBase {
 
   async init(config) {
     this.config = config
-    await Promise.all([
-      this.updateStatus(InstanceStatus.Ok),
-      this.updateActions(), // export actions
-      this.updateFeedbacks(), // export feedbacks
-      this.updateVariableDefinitions(), // export variable definitions
-      this.assignBoardNamesToVars(),
-      
-    ]);
-    await this.updatePresets()
+    this.assignBoardNamesToVars()
+    this.updateStatus(InstanceStatus.Ok),
+    this.updateActions(), // export actions
+    this.updateFeedbacks(), // export feedbacks
+    this.updateVariableDefinitions(), // export variable definitions
+    
+    this.updatePresets()
   }
   // When module gets deleted
   async destroy() {
@@ -78,6 +81,7 @@ class ModuleInstance extends InstanceBase {
   }
 
   updatePresets() {
+    this.boardNames = boardNames;
     UpdatePresets(this)
   }
 
@@ -97,7 +101,7 @@ class ModuleInstance extends InstanceBase {
       boardNames[i] = { variableId: `board${i}Name`, name: `board${i}Name` };
     }
     this.setVariableDefinitions(boardNames); //assign variable names to new variables
-    
+
     for (let i = 0; i < boardInfo.length; i++) { //assemble variable values
       boardValues[`board${i}Name`] = boardInfo[i].name
     }
@@ -180,7 +184,7 @@ class ModuleInstance extends InstanceBase {
             eventNames[i] = { variableId: `event${i}Name`, name: `${boardData[i].name}--Label` };
             eventIds[i] = { variableId: `event${i}ID`, name: `${boardData[i].name}--ID` }
           }
-          let eventNamesandIds = eventNames.concat(eventIds,boardNames)
+          let eventNamesandIds = eventNames.concat(eventIds, boardNames)
           this.setVariableDefinitions(eventNamesandIds);
 
           for (let i = 0; i < boardData.length; i++) { //create the arrays for variable values
@@ -188,7 +192,7 @@ class ModuleInstance extends InstanceBase {
             varValues[`event${i}ID`] = boardData[i].id
           }
           this.setVariableValues(varValues);
-          //this.updatePresets();
+          this.updatePresets();
         } //end if board-action equals get-options
 
       })

@@ -1,11 +1,10 @@
-const main = require('./main.js')
-let boardNames = main.boardNames
 const { combineRgb } = require('@companion-module/base')
 module.exports = function (self) {
+  console.log(self.boardNames)
   self.setPresetDefinitions(presets)
-  console.log(boardNames)
 }
 const presets = {}
+
 presets[`my_first_preset`] = {
   type: 'button', // This must be 'button' for now
   category: 'Board Start/Stop', // This groups presets into categories in the ui. Try to create logical groups to help users find presets

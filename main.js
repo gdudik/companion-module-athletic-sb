@@ -91,11 +91,11 @@ class ModuleInstance extends InstanceBase {
     for (let i = 0; i < boardInfo.length; i++) {
       boardNames[i] = { variableId: `board${i}Name`, name: `board${i}Name` };
     }
-    //this.setVariableDefinitions(boardNames);
+    this.setVariableDefinitions(boardNames);
     for (let i = 0; i < boardInfo.length; i++) {
       boardValues[`board${i}Name`] = boardInfo[i].name
     }
-    //this.setVariableValues(boardValues);
+    this.setVariableValues(boardValues);
   }
 
   executeAction = async (action) => {

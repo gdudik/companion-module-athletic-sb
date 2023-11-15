@@ -13,6 +13,8 @@ let varValues = {};
 let boardInfo;
 const boardNames = [];
 let boardValues = {};
+module.exports = { boardNames };
+
 
 class ModuleInstance extends InstanceBase {
   constructor(internal) {
@@ -21,12 +23,15 @@ class ModuleInstance extends InstanceBase {
 
   async init(config) {
     this.config = config
-    this.updateStatus(InstanceStatus.Ok)
-    this.updatePresets()
-    this.updateActions() // export actions
-    this.updateFeedbacks() // export feedbacks
-    this.updateVariableDefinitions() // export variable definitions
-    this.assignBoardNamesToVars()
+    await Promise.all([
+      this.updateStatus(InstanceStatus.Ok),
+      this.updateActions(), // export actions
+      this.updateFeedbacks(), // export feedbacks
+      this.updateVariableDefinitions(), // export variable definitions
+      this.assignBoardNamesToVars(),
+      
+    ]);
+    await this.updatePresets()
   }
   // When module gets deleted
   async destroy() {
@@ -88,14 +93,15 @@ class ModuleInstance extends InstanceBase {
     }
     const response = await axios(boardInfoRequest);
     boardInfo = response.data;
-    for (let i = 0; i < boardInfo.length; i++) {
+    for (let i = 0; i < boardInfo.length; i++) { //assemble variable names
       boardNames[i] = { variableId: `board${i}Name`, name: `board${i}Name` };
     }
-    this.setVariableDefinitions(boardNames);
-    for (let i = 0; i < boardInfo.length; i++) {
+    this.setVariableDefinitions(boardNames); //assign variable names to new variables
+    
+    for (let i = 0; i < boardInfo.length; i++) { //assemble variable values
       boardValues[`board${i}Name`] = boardInfo[i].name
     }
-    this.setVariableValues(boardValues);
+    this.setVariableValues(boardValues); //assign variable values to names
   }
 
   executeAction = async (action) => {
@@ -152,15 +158,15 @@ class ModuleInstance extends InstanceBase {
     axios(requestData)
       .then((response) => {
 
-        //this.log('info', response.status);
-        //console.log(boardAction)
+
         const boardData = response.data;
-        //console.log(boardData);
+
 
         if (boardAction === 'get-options') {
+          //console.log(boardValues)
           if (varValues) { /* clear the variables before redefining, otherwise variable values for definitions persist even though the variables were removed from the list of defined variables */
             let keys = Object.keys(varValues);
-            console.log(keys);
+            //console.log(keys);
             for (let i = 0; i < keys.length; i++) {
               varValues[keys[i]] = undefined;
             }
@@ -174,7 +180,7 @@ class ModuleInstance extends InstanceBase {
             eventNames[i] = { variableId: `event${i}Name`, name: `${boardData[i].name}--Label` };
             eventIds[i] = { variableId: `event${i}ID`, name: `${boardData[i].name}--ID` }
           }
-          let eventNamesandIds = eventNames.concat(eventIds)
+          let eventNamesandIds = eventNames.concat(eventIds,boardNames)
           this.setVariableDefinitions(eventNamesandIds);
 
           for (let i = 0; i < boardData.length; i++) { //create the arrays for variable values
@@ -182,6 +188,7 @@ class ModuleInstance extends InstanceBase {
             varValues[`event${i}ID`] = boardData[i].id
           }
           this.setVariableValues(varValues);
+          //this.updatePresets();
         } //end if board-action equals get-options
 
       })

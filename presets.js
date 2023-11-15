@@ -1,6 +1,9 @@
+const main = require('./main.js')
+let boardNames = main.boardNames
 const { combineRgb } = require('@companion-module/base')
 module.exports = function (self) {
   self.setPresetDefinitions(presets)
+  console.log(boardNames)
 }
 const presets = {}
 presets[`my_first_preset`] = {
@@ -9,7 +12,7 @@ presets[`my_first_preset`] = {
   name: `My button`, // A name for the preset. Shown to the user when they hover over it
   style: {
     // This is the minimal set of style properties you must define
-    text: `Board On/Off`, // You can use variables from your module here
+    text: `$(athleticsb:board0Name)`, // You can use variables from your module here
     size: 'auto',
     color: combineRgb(255, 255, 255),
     bgcolor: combineRgb(0, 0, 0),

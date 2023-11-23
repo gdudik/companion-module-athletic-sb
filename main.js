@@ -28,13 +28,15 @@ class ModuleInstance extends InstanceBase {
 
   async init(config) {
     this.config = config
-    this.assignBoardNamesToVars()
-    this.updateStatus(InstanceStatus.Ok),
-    this.updateActions(), // export actions
-    this.updateFeedbacks(), // export feedbacks
-    this.updateVariableDefinitions(), // export variable definitions
-    
-    this.updatePresets()
+    await Promise.all([
+      this.updateStatus(InstanceStatus.Ok),
+      this.updateActions(), // export actions
+      this.updateFeedbacks(), // export feedbacks
+      this.updateVariableDefinitions(), // export variable definitions
+      this.assignBoardNamesToVars(),
+    ]);
+ 
+    await this.updatePresets();
   }
   // When module gets deleted
   async destroy() {

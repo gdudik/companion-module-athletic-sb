@@ -19,11 +19,22 @@ const generatePresets = async (self) => {
         down: [{
           actionId: 'start_board',
           options: {
-            board_name: 'Board'
+            board_name: `$(athleticsb:board${i}Name)`
           },
         }],
         up: [],
-      }],
+      },
+      {
+        down: [{
+          actionId: 'stop_board',
+          options: {
+            board_name: `$(athleticsb:board${i}Name)`
+          },
+        }],
+        up: [],
+      }
+    ],
+      
       feedbacks: [], // You can add some presets from your module here
     }
   }

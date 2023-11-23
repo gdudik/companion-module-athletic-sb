@@ -129,13 +129,13 @@ class ModuleInstance extends InstanceBase {
           boardAction = 'start';
         }
         reqMethod = 'POST';
-        boardName = action.options.board_name;
+        boardName = await this.parseVariablesInString(action.options.board_name);
         break;
 
       case 'stop_board':
         reqMethod = 'POST';
         boardAction = 'stop';
-        boardName = action.options.board_name;
+        boardName = await this.parseVariablesInString(action.options.board_name);
         break;
 
       case 'set_data':
@@ -148,7 +148,7 @@ class ModuleInstance extends InstanceBase {
       case 'get_data':
         reqMethod = 'GET';
         boardAction = 'get-options';
-        boardName = action.options.board_name;
+        boardName = await this.parseVariablesInString(action.options.board_name);
         break;
     }
 
